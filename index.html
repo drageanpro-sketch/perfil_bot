@@ -290,11 +290,11 @@
             try {
                 const result = await fetchWithRetry({
                     contents: [{ 
-			parts: [{ text: `Analiza: Gasto $${data.spending}, Frecuencia ${data.freq}, Canal ${data.channel}, Intereses: ${data.interests}` }] }],
+						parts: [{ text: `Analiza: Gasto $${data.spending}, Frecuencia ${data.freq}, Canal ${data.channel}, Intereses: ${data.interests}` }] }],
                     systemInstruction: { parts: [{ text: systemPrompt }] },
                     generationConfig: { 
-			responseMimeType: "application/json" 
-			temperature: 0.7
+						responseMimeType: "application/json", 
+						temperature: 0.7
 		    }
                   
                 });
@@ -529,3 +529,4 @@
 </body>
 
 </html>
+
