@@ -454,26 +454,46 @@
 
                 doc.setFontSize(12);
     			items.forEach(it => {
-        			const parts = it.split('**'); // Dividimos el texto por los asteriscos
-        			let currentX = margin + 5;
+        			const wordsArray = [];
+        			const parts = it.split('**');
         
-        			// Calculamos si el texto completo cabe, si no, lo manejamos (simplificado)
-        			checkNewPage(7);
+        			parts.forEach((part, index) => {
+        				const isBold = index % 2 !== 0;
+            			const words = part.split(' ');
+            			words.forEach((w, i) => {
+							// Conservamos el espacio si no es la última palabra del fragmento
+                			const wordWithSpace = w + (i < words.length - 1 ? " " : "");
+                			if (wordWithSpace !== "") {
+                    			wordsArray.push({ text: wordWithSpace, bold: isBold });
+                			}
+        				});
+					});
+
+					// 2. Dibujamos el bullet point
         			doc.setFont("helvetica", "normal");
         			doc.text("• ", margin, y);
 
-        			parts.forEach((part, index) => {
-		            // Los índices impares son los que estaban entre ** (negrita)
-            			const isBold = index % 2 !== 0;
-            			doc.setFont("helvetica", isBold ? "bold" : "normal");
-            
-            			doc.text(part, currentX, y);
-            			currentX += doc.getTextWidth(part);
+					let currentX = margin + 7; // Empezamos un poco a la derecha del bullet
+        			const maxX = pageWidth - margin;
+
+					// 3. Dibujamos palabra por palabra con control de margen
+        			wordsArray.forEach(wordObj => {
+						doc.setFont("helvetica", wordObj.bold ? "bold" : "normal");
+            			const wordWidth = doc.getTextWidth(wordObj.text);
+
+						// Si la palabra excede el margen derecho, hacemos un salto de línea
+            			if (currentX + wordWidth > maxX) {
+							y += 6;
+                			currentX = margin + 7; // Volvemos al inicio de la línea (alineado con el texto, no con el bullet)
+                			checkNewPage(7);
+            			}
+
+						doc.text(wordObj.text, currentX, y);
+            			currentX += wordWidth;
         			});
-        
-        			y += 7;
+					y += 8; // Espacio entre puntos de la lista
                 });
-                y += 6;
+                y += 4; // Espacio después de la sección
             };
 
             addSection("Psicografía y Valores:", lastResult.psychographics);
@@ -548,5 +568,6 @@
 </body>
 
 </html>
+
 
 
