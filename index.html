@@ -354,12 +354,18 @@
             window.scrollTo({ top: 150, behavior: 'smooth' });
         }
 
+		function formatBold(text) {
+    		return text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+		}
+		
         function renderList(container, items) {
             container.innerHTML = '';
+			if (!items) return;
+			
             items.forEach(it => {
                 const p = document.createElement('p');
                 p.className = "flex items-start pb-2 text-sm";
-                p.innerHTML = `<i class="fas fa-check-circle text-blue-500 mr-2 mt-1 text-[10px]"></i><span>${it}</span>`;
+                p.innerHTML = `<i class="fas fa-check-circle text-blue-500 mr-2 mt-1 text-[10px]"></i><span>${formatBold(it)}</span>`;
                 container.appendChild(p);
             });
         }
@@ -446,13 +452,26 @@
                 doc.text(title, margin, y);
                 y += 8;
 
-                doc.setFont("helvetica", "normal");
                 doc.setFontSize(12);
-                items.forEach(it => {
-                    const lines = doc.splitTextToSize("• " + it, maxContentWidth);
-                    checkNewPage(lines.length * 7);
-                    doc.text(lines, margin + 5, y);
-                    y += (lines.length * 7);
+    			items.forEach(it => {
+        			const parts = it.split('**'); // Dividimos el texto por los asteriscos
+        			let currentX = margin + 5;
+        
+        			// Calculamos si el texto completo cabe, si no, lo manejamos (simplificado)
+        			checkNewPage(7);
+        			doc.setFont("helvetica", "normal");
+        			doc.text("• ", margin, y);
+
+        			parts.forEach((part, index) => {
+		            // Los índices impares son los que estaban entre ** (negrita)
+            			const isBold = index % 2 !== 0;
+            			doc.setFont("helvetica", isBold ? "bold" : "normal");
+            
+            			doc.text(part, currentX, y);
+            			currentX += doc.getTextWidth(part);
+        			});
+        
+        			y += 7;
                 });
                 y += 6;
             };
@@ -529,4 +548,5 @@
 </body>
 
 </html>
+
 
