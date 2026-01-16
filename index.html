@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estratega de Perfiles IA | Consultoría de Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        .dashboard-card { 
+            background: white; 
+            border-radius: 0.75rem; 
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .loading-spinner { 
+            width: 50px; height: 50px; 
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #1d4ed8; 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+        }
+
+        /* Animación personalizada para el Bot */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .section-header-banner {
+            background: #1d4ed8;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem 0.75rem 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .metric-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">
+                    <i class="fas fa-robot text-blue-600 mr-3 animate-float"></i>Estratega de <span class="text-blue-600">Perfil de Clientes</span>
+                </h1>
+                <p class="text-slate-500 mt-1">Análisis profesional y generación de audiencias con inteligencia artificial.</p>
+            </div>
+            <div id="statusBadge" class="flex items-center space-x-2 text-xs font-bold bg-white border px-4 py-2 rounded-full shadow-sm text-slate-600">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span>IA Gemini 2.5 Flash Online</span>
+            </div>
+        </header>
+
+        <!-- Recomendaciones -->
+        <div class="mb-8 bg-slate-900 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+            <div class="relative z-10">
+                <h3 class="text-xl font-bold mb-3 flex items-center text-blue-400">
+                    <i class="fas fa-lightbulb text-yellow-400 mr-3"></i>Recomendaciones para mejores resultados
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-300">
+                    <div class="flex items-start">
+                        <i class="fas fa-check-circle mr-3 mt-1 text-blue-400"></i>
+                        <p class="text-sm"><strong>Detalle emocional:</strong> Describe aspiraciones reales para un perfil más humano.</p>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-check-circle mr-3 mt-1 text-blue-400"></i>
+                        <p class="text-sm"><strong>Gasto Real:</strong> El valor mensual permite a la IA calcular el potencial comercial.</p>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-check-circle mr-3 mt-1 text-blue-400"></i>
+                        <p class="text-sm"><strong>Hábitos:</strong> Menciona intereses concretos para una segmentación precisa.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Sidebar: Configuración -->
+            <aside class="lg:col-span-4">
+                <div class="dashboard-card p-6 sticky top-8">
+                    <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                        <i class="fas fa-sliders-h mr-2 text-blue-600"></i>Configuración del Perfil
+                    </h2>
+                    <form id="customerForm" class="space-y-5">
+                        <div class="space-y-1">
+                            <label class="metric-label">Gasto promedio mensual (USD)</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-3 text-slate-400 font-bold">$</span>
+                                <input type="number" id="monthlySpending" class="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="Ej. 500" required>
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="metric-label">Frecuencia de Compra</label>
+                            <select id="purchaseFrequency" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+                                <option value="Baja (1-2 veces al mes)">Baja (1 - 2 veces al mes)</option>
+                                <option value="Media (3-4 veces al mes)" selected>Media (3 - 6 veces al mes)</option>
+                                <option value="Alta (5+ veces al mes)">Alta (6+ veces al mes)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="metric-label">Canal de Compra Preferido</label>
+                            <select id="purchaseChannel" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium">
+                                <option value="Digital">Web / E-commerce</option>
+                                <option value="Físico">Tienda Física</option>
+                                <option value="Omnicanal">Ambos</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="metric-label">Intereses y Hábitos</label>
+                            <textarea id="interests" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm leading-relaxed" rows="5" placeholder="Ej. Amante del café de especialidad, profesional del sector IT, valora la rapidez..." required></textarea>
+                        </div>
+                        <button type="submit" id="generateBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center transform active:scale-95">
+                            <i class="fas fa-wand-magic-sparkles mr-2"></i>Generar Estrategia
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <!-- Resultados -->
+            <main class="lg:col-span-8">
+                <!-- Carga -->
+                <div id="loadingOverlay" class="hidden dashboard-card p-24 flex flex-col items-center justify-center text-center">
+                    <div class="loading-spinner mb-6"></div>
+                    <h3 class="text-xl font-bold text-slate-800">Procesando Inteligencia...</h3>
+                    <p class="text-slate-500">Estamos analizando los datos para crear un perfil estratégico de alto nivel.</p>
+                </div>
+
+                <!-- Vacío -->
+                <div id="emptyState" class="dashboard-card p-24 flex flex-col items-center justify-center text-center border-dashed border-2 bg-white/50">
+                    <div class="w-24 h-24 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+                        <i class="fas fa-file-invoice text-4xl text-blue-200"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-400">Sin Informe Activo</h3>
+                    <p class="text-gray-400 max-w-xs">Ingresa los datos de segmentación para desplegar el informe estratégico.</p>
+                </div>
+
+                <!-- Informe Dinámico -->
+                <div id="dashboardContainer" class="hidden fade-in space-y-6">
+                    
+                    <!-- Cabecera de Informe -->
+                    <div class="dashboard-card overflow-hidden">
+                        <div class="section-header-banner">
+                            <h3 class="font-bold text-sm tracking-wide flex items-center uppercase">
+                                <i class="fas fa-clipboard-check mr-2"></i> Perfil del cliente generado
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button id="copyFullReport" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg text-[11px] font-bold transition flex items-center border border-white/20">
+                                    <i class="fas fa-copy mr-1.5"></i> COPIAR INFORME
+                                </button>
+                                <button id="exportBtn" class="bg-white text-blue-700 px-4 py-2 rounded-lg text-[11px] font-bold transition flex items-center hover:bg-slate-100 shadow-sm">
+                                    <i class="fas fa-file-pdf mr-1.5"></i> DESCARGAR PDF
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Descripción -->
+                        <div class="p-8">
+                            <h2 class="text-xs font-black text-blue-600 uppercase tracking-widest mb-1">Descripción del Perfil</h2>
+                            <h3 id="segmentTitle" class="text-3xl font-black text-slate-900 leading-tight mb-3">...</h3>
+                            
+                            <div id="profileMetadata" class="text-[11px] text-slate-500 font-medium mb-5 leading-relaxed border-b border-slate-100 pb-4">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                            
+                            <p id="segmentDesc" class="text-lg text-slate-600 leading-relaxed italic border-l-4 border-blue-500 pl-5 bg-slate-50 py-4 rounded-r-xl">...</p>
+                        </div>
+                    </div>
+
+                    <!-- Cuadrícula Estratégica -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="dashboard-card p-6">
+                            <h4 class="font-bold text-slate-800 mb-4 flex items-center uppercase text-[13px] tracking-widest text-indigo-600">
+                                <i class="fas fa-fingerprint mr-2"></i>Psicografía y Valores
+                            </h4>
+                            <div id="psychographics" class="space-y-2 text-sm text-slate-600"></div>
+                        </div>
+
+                        <div class="dashboard-card p-6">
+                            <h4 class="font-bold text-slate-800 mb-4 flex items-center uppercase text-[13px] tracking-widest text-red-500">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>Puntos de Dolor
+                            </h4>
+                            <div id="painPoints" class="space-y-2 text-sm text-slate-600"></div>
+                        </div>
+
+                        <div class="dashboard-card p-6 md:col-span-2">
+                            <h4 class="font-bold text-slate-800 mb-4 flex items-center uppercase text-[13px] tracking-widest text-emerald-600">
+                                <i class="fas fa-chess mr-2"></i>Estrategia Recomendada
+                            </h4>
+                            <div id="strategy" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600"></div>
+                        </div>
+
+                        <!-- Copys Publicitarios -->
+                        <div class="dashboard-card p-8 bg-slate-900 text-white md:col-span-2 shadow-inner">
+                            <h4 class="font-bold text-slate-400 mb-6 flex items-center uppercase text-[13px] tracking-widest">
+                                <i class="fas fa-bullhorn mr-2 text-yellow-400"></i>Mensajes Publicitarios Sugeridos
+                            </h4>
+                            <div id="adCopiesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Dinámico -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-3 rounded-full text-sm font-bold shadow-2xl opacity-0 transition-all duration-300 pointer-events-none z-50">
+        Mensaje
+    </div>
+
+    <script>
+        // CONFIGURACIÓN DE IA
+        
+	async function fetchWithRetry(payload) {
+            try {
+            	const response = await fetch('/api/chat', { // Apunta a tu función secreta en Vercel
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+            	if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+            	}
+
+            	return response.json();
+            } catch (error) {
+            	console.error("Error en la comunicación:", error);
+            	throw error;
+            }
+    	}
+
+        let lastResult = null;
+
+        // UI Refs
+        const form = document.getElementById('customerForm');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const emptyState = document.getElementById('emptyState');
+        const dashboardContainer = document.getElementById('dashboardContainer');
+        const toast = document.getElementById('toast');
+
+        // Dashboard Refs
+        const segmentTitle = document.getElementById('segmentTitle');
+        const segmentDesc = document.getElementById('segmentDesc');
+        const psychographics = document.getElementById('psychographics');
+        const painPoints = document.getElementById('painPoints');
+        const strategy = document.getElementById('strategy');
+        const adCopiesGrid = document.getElementById('adCopiesGrid');
+        const profileMetadata = document.getElementById('profileMetadata');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            toggleLoading(true);
+            
+            const data = {
+                spending: document.getElementById('monthlySpending').value,
+                freq: document.getElementById('purchaseFrequency').value,
+                channel: document.getElementById('purchaseChannel').value,
+                interests: document.getElementById('interests').value
+            };
+
+            const systemPrompt = `Eres un experto senior en marketing estratégico. Analiza los datos y devuelve un JSON detallado.
+            REGLA: Responde solo JSON, sin markdown.
+            Schema:
+            {
+                "segmentTitle": "Nombre de impacto",
+                "description": "Explicación breve",
+                "psychographics": ["Insight 1", "Insight 2", "Insight 3", "Insight 4"],
+                "painPoints": ["Dolor 1", "Dolor 2", "Dolor 3"],
+                "strategy": ["Estrategia 1", "Estrategia 2", "Estrategia 3", "Estrategia 4"],
+                "adCopies": [
+                    {"type": "Emocional", "text": "Copy 1"},
+                    {"type": "Venta Directa", "text": "Copy 2"},
+                    {"type": "Solución de Problema", "text": "Copy 3"},
+                    {"type": "Escasez/Urgencia", "text": "Copy 4"}
+                ]
+            }`;
+
+            try {
+                const result = await fetchWithRetry({
+                    contents: [{ 
+			parts: [{ text: `Analiza: Gasto $${data.spending}, Frecuencia ${data.freq}, Canal ${data.channel}, Intereses: ${data.interests}` }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    generationConfig: { 
+			responseMimeType: "application/json" 
+			temperature: 0.7
+		    }
+                  
+                });
+
+                const rawText = result.candidates[0].content.parts[0].text;
+                const rawResult = JSON.parse(rawText.trim());
+                
+                rawResult.inputData = data;
+                rawResult.generatedAt = new Date().toISOString();
+                
+                renderDashboard(rawResult);
+            } catch (err) {
+                console.error(err);
+                showToast("Error al conectar con la IA.");
+                toggleLoading(false);
+            }
+        };
+
+        function renderDashboard(data) {
+            lastResult = data;
+            emptyState.classList.add('hidden');
+            loadingOverlay.classList.add('hidden');
+            dashboardContainer.classList.remove('hidden');
+            generateBtn.disabled = false;
+
+            segmentTitle.textContent = data.segmentTitle;
+            segmentDesc.textContent = data.description;
+            
+            const date = data.generatedAt ? new Date(data.generatedAt) : new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const dateStr = date.toLocaleDateString('es-ES', dateOptions);
+            
+            const gasto = data.inputData?.spending || "No especificado";
+            const freq = data.inputData?.freq || "No especificada";
+            const channel = data.inputData?.channel || "No especificado";
+
+            profileMetadata.innerHTML = `
+                <div>Perfil generado el ${dateStr}</div>
+                <div class="mt-1">Gasto: $${gasto} | Frecuencia: ${freq} | Canal: ${channel}</div>
+            `;
+
+            renderList(psychographics, data.psychographics);
+            renderList(painPoints, data.painPoints);
+            renderList(strategy, data.strategy);
+            
+            adCopiesGrid.innerHTML = '';
+            data.adCopies.forEach(copy => {
+                const card = document.createElement('div');
+                card.className = "bg-white/5 border border-white/10 p-4 rounded-xl hover:bg-white/10 transition";
+                card.innerHTML = `
+                    <span class="text-[9px] font-black uppercase tracking-widest text-blue-400 block mb-2">${copy.type}</span>
+                    <p class="text-sm italic leading-snug">"${copy.text}"</p>
+                `;
+                adCopiesGrid.appendChild(card);
+            });
+            
+            window.scrollTo({ top: 150, behavior: 'smooth' });
+        }
+
+        function renderList(container, items) {
+            container.innerHTML = '';
+            items.forEach(it => {
+                const p = document.createElement('p');
+                p.className = "flex items-start pb-2 text-sm";
+                p.innerHTML = `<i class="fas fa-check-circle text-blue-500 mr-2 mt-1 text-[10px]"></i><span>${it}</span>`;
+                container.appendChild(p);
+            });
+        }
+
+        function toggleLoading(active) {
+            loadingOverlay.classList.toggle('hidden', !active);
+            emptyState.classList.add('hidden');
+            dashboardContainer.classList.add('hidden');
+            generateBtn.disabled = active;
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.style.opacity = "1";
+            setTimeout(() => toast.style.opacity = "0", 3000);
+        }
+
+        // ACCIONES
+        document.getElementById('copyFullReport').onclick = () => {
+            if(!lastResult) return;
+            const meta = profileMetadata.innerText;
+            const fullText = `INFORME ESTRATÉGICO: ${lastResult.segmentTitle}\n${meta}\n\nDESCRIPCIÓN:\n${lastResult.description}\n\nPSICOGRAFÍA:\n${lastResult.psychographics.join('\n')}\n\nPUNTOS DE DOLOR:\n${lastResult.painPoints.join('\n')}\n\nESTRATEGIA:\n${lastResult.strategy.join('\n')}\n\nCOPYS:\n${lastResult.adCopies.map(c => `${c.type}: ${c.text}`).join('\n')}`;
+            const el = document.createElement('textarea');
+            el.value = fullText; document.body.appendChild(el);
+            el.select(); document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("Informe copiado.");
+        };
+
+        document.getElementById('exportBtn').onclick = () => {
+            if(!lastResult) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+
+            // CONFIGURACIÓN DE PÁGINA (A4: 210x297mm)
+            const margin = 25.4; // 2.54 cm
+            const pageWidth = 210;
+            const maxContentWidth = pageWidth - (margin * 2); // 159.2 mm
+            const pageHeight = 297;
+            const marginBottom = 25.4;
+            let y = margin;
+
+            const checkNewPage = (heightNeeded) => {
+                if (y + heightNeeded > pageHeight - marginBottom) {
+                    doc.addPage();
+                    y = margin;
+                }
+            };
+
+            // Título Principal
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(29, 78, 216);
+            doc.text("Informe Estratégico del Perfil del Cliente", margin, y);
+            y += 12;
+
+            // Nombre Segmento
+            doc.setFontSize(16);
+            doc.setTextColor(0);
+            doc.text(lastResult.segmentTitle, margin, y);
+            y += 10;
+
+            // Metadatos
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.setFont("helvetica", "normal");
+            const metaText = profileMetadata.innerText.replace('\n', ' | ');
+            doc.text(metaText, margin, y);
+            y += 10;
+
+            // Descripción
+            doc.setFontSize(12);
+            doc.setTextColor(50);
+            const descLines = doc.splitTextToSize(lastResult.description, maxContentWidth);
+            checkNewPage(descLines.length * 7);
+            doc.text(descLines, margin, y);
+            y += (descLines.length * 7) + 4;
+
+            const addSection = (title, items) => {
+                checkNewPage(15);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(0);
+                doc.text(title, margin, y);
+                y += 8;
+
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(12);
+                items.forEach(it => {
+                    const lines = doc.splitTextToSize("• " + it, maxContentWidth);
+                    checkNewPage(lines.length * 7);
+                    doc.text(lines, margin + 5, y);
+                    y += (lines.length * 7);
+                });
+                y += 6;
+            };
+
+            addSection("Psicografía y Valores:", lastResult.psychographics);
+            addSection("Barreras y Dolores:", lastResult.painPoints);
+            addSection("Estrategia Comercial:", lastResult.strategy);
+
+            // Mensajes Publicitarios
+            checkNewPage(15);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(0);
+            doc.text("Mensajes Publicitarios Sugeridos:", margin, y);
+            y += 8;
+
+            lastResult.adCopies.forEach(c => {
+                const label = `${c.type}: `;
+                const content = `"${c.text}"`;
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                const labelWidth = doc.getTextWidth(label);
+                
+                doc.setFont("helvetica", "normal");
+                const wrappedText = doc.splitTextToSize(content, maxContentWidth - labelWidth);
+                
+                checkNewPage(wrappedText.length * 7 + 5);
+                
+                doc.setFont("helvetica", "bold");
+                doc.text(label, margin + 5, y);
+                
+                doc.setFont("helvetica", "normal");
+                doc.text(wrappedText[0], margin + 5 + labelWidth, y);
+                y += 5;
+
+                if (wrappedText.length > 1) {
+                    for (let i = 1; i < wrappedText.length; i++) {
+                        doc.text(wrappedText[i], margin + 5, y);
+                        y += 7;
+                    }
+                }
+                y += 4;
+            });
+
+            doc.save(`Informe_Cliente_${lastResult.segmentTitle.replace(/\s+/g, '_')}.pdf`);
+            showToast("PDF generado correctamente.");
+        };
+
+        form.addEventListener('input', () => { generateBtn.disabled = false; });
+    </script>
+</body>
+</html>
