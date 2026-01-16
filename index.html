@@ -239,27 +239,6 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN DE IA
-        
-	async function fetchWithRetry(payload) {
-            try {
-            	const response = await fetch('/api/chat', { // Apunta a tu función secreta en Vercel
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-            	if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Error ${response.status}`);
-            	}
-
-            	return response.json();
-            } catch (error) {
-            	console.error("Error en la comunicación:", error);
-            	throw error;
-            }
-    	}
 
         let lastResult = null;
 
@@ -523,7 +502,30 @@
             showToast("PDF generado correctamente.");
         };
 
+		// CONFIGURACIÓN DE IA
+        
+		async function fetchWithRetry(payload) {
+            try {
+            	const response = await fetch('/api/chat', { // Apunta a tu función secreta en Vercel
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+            	if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Error ${response.status}`);
+            	}
+
+            	return response.json();
+            } catch (error) {
+            	console.error("Error en la comunicación:", error);
+            	throw error;
+            }
+    	}
+		
         form.addEventListener('input', () => { generateBtn.disabled = false; });
     </script>
 </body>
+
 </html>
